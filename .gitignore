@@ -47,6 +47,9 @@ staticfiles/
 # Virtual Environment
 pyenv.cfg
 
+# ChromaDB Databases
+*.bin
+*.pickle
 
 # Installer logs
 pip-log.txt

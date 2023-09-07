@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Djanglang Chat</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        #chatBox {
+            height: 80vh;  /* Use 80% of the screen height */
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .typing-indicator {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card">
+        <div class="card-header bg-primary text-white">Djanglang Chat</div>
+        <div class="card-body" id="chatBox">
+            <!-- Chat messages will be appended here -->
+        </div>
+        <div class="typing-indicator text-muted pl-2">Djanglang is typing...</div>
+        <div class="card-footer">
+            <div class="input-group">
+                <input type="text" id="query" class="form-control" placeholder="Ask a question related to Django...">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit" id="sendBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+
+<script>
+    document.getElementById('sendBtn').addEventListener('click', function() {
+        const queryInput = document.getElementById('query');
+        const query = queryInput.value;
+        if (query.trim() === '') return;  // Don't send empty messages
+
+        // Append user's message to chatBox
+        const chatBox = document.getElementById('chatBox');
+        const userMessage = document.createElement('div');
+        userMessage.className = 'message bg-light';
+        userMessage.innerHTML = `<strong>You:</strong> ${query} <span class="text-muted float-right">${new Date().toLocaleTimeString()}</span>`;
+        chatBox.appendChild(userMessage);
+
+        // Show typing indicator
+        document.querySelector('.typing-indicator').style.display = 'block';
+
+        // Fetch data from server
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `query=${query}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bg-secondary text-white';
+            botMessage.innerHTML = `<strong>Djanglang:</strong> ${data.answer}<br><small>${data.sources}</small> <span class="text-muted float-right">${new Date().toLocaleTimeString()}</span>`;
+            chatBox.appendChild(botMessage);
+
+            // Scroll to the bottom of chatBox to show latest message
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Hide typing indicator
+            document.querySelector('.typing-indicator').style.display = 'none';
+        });
+
+        // Clear the input field
+        queryInput.value = '';
+    });
+</script>
+</body>
+</html>
