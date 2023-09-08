@@ -81,5 +81,70 @@ def answer_query(query):
 
     return result
 
+def initiate_db_creation(db_name, source_url):
+    """
+    Initiate the database creation process.
+    """
+    try:
+        # 1. Scrape the provided source URL
+        urls = scrape_source_url(source_url)
+        
+        # 2. Build the database using the scraped URLs
+        build_custom_database(db_name, urls)
+        
+        return True, "Database creation initiated successfully."
+    except Exception as e:
+        return False, str(e)
 
+def scrape_source_url(source_url):
+    """
+    Scrape the provided source URL to get a list of relevant URLs.
+    This function will only scrape contents of the domain under the specified path.
+    """
+    base_url = urlparse(source_url)
+    response = requests.get(source_url)
+    html = response.content.decode("utf-8")
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # Find all anchor tags in the page
+    links = soup.find_all("a", href=True)
+    
+    result = set()
 
+    for link in links:
+        # Create an absolute URL
+        absolute_link = urljoin(source_url, link["href"])
+        link_parts = urlparse(absolute_link)
+        
+        # Check if the link is from the same domain and is under the specified path
+        if link_parts.netloc == base_url.netloc and link_parts.path.startswith(base_url.path):
+            result.add(absolute_link)
+
+    return list(result)
+
+def build_custom_database(db_name, urls):
+    """
+    Build a Chroma database using the provided URLs.
+    """
+    # Define the directory for Chroma DB based on the provided db_name
+    CHROMA_DB_DIRECTORY = f"chroma_db/{db_name}"
+
+    # Load the documents from the URLs
+    loader = WebBaseLoader(urls)
+    documents = loader.load()
+
+    # Split the documents into chunks
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    splitted_documents = text_splitter.split_documents(documents)
+
+    # Create embeddings using OpenAI's API
+    embeddings = OpenAIEmbeddings()
+
+    # Build the Chroma database
+    db = Chroma.from_documents(
+        splitted_documents,
+        embeddings,
+        collection_name=db_name,
+        persist_directory=CHROMA_DB_DIRECTORY,
+    )
+    db.persist()

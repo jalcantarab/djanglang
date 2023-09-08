@@ -1,6 +1,6 @@
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
-from .logic import answer_query, build_database, database_exists  # Import your logic functions here
+from .logic import answer_query, build_database, database_exists, initiate_db_creation  # Import your logic functions here
 import threading
 
 def index(request):
@@ -10,6 +10,9 @@ def index(request):
         return JsonResponse(result)
     return render(request, 'base/index.html')
 
+def new_db(request):
+    return render(request, 'base/create_db_form.html')
+
 def db_status(request):
     status = {
         'exists': database_exists(),
@@ -17,10 +20,31 @@ def db_status(request):
     }
     return JsonResponse(status)
 
+
+
+# Addons
 def build_db(request):
     # Use threading to build the database asynchronously
     thread = threading.Thread(target=build_database)
     thread.start()
     return JsonResponse({'status': 'Building database...'})
+
+def create_db_form(request):
+    return render(request, 'base/create_db_form.html')
+
+def create_db(request):
+    if request.method == 'POST':
+        db_name = request.POST.get('dbName')
+        source_url = request.POST.get('sourceUrl')
+        
+        # Call the function to initiate the database creation process
+        success, message = initiate_db_creation(db_name, source_url)
+        
+        if success:
+            return JsonResponse({"status": "success", "message": message})
+        else:
+            return JsonResponse({"status": "error", "message": message}, status=400)
+    else:
+        return HttpResponse("Method not allowed", status=405)
 
 
