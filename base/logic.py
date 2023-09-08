@@ -9,10 +9,14 @@ from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
 CHROMA_DB_DIRECTORY = "chroma_db/ask_django_docs"
+
+def database_exists():
+    return os.path.exists(CHROMA_DB_DIRECTORY)
 
 def django_docs_build_urls():
     root_url = "https://docs.djangoproject.com/en/4.2/contents/"
@@ -76,3 +80,6 @@ def answer_query(query):
     result = chain({"question": query}, return_only_outputs=True)
 
     return result
+
+
+

@@ -25,28 +25,75 @@
     </style>
 </head>
 <body>
-<div class="container mt-5">
+    <div id="loadingScreen" style="display: none;" class="text-center">
+        <h4 id="loadingMessage">Initializing...</h4>
+        <!-- Bootstrap Progress Bar -->
+        <div class="progress mt-3" style="width: 60%; margin: auto;">
+            <div id="loadingProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+        </div>
+    </div>
+    <div class="container mt-5" id="djanglang-chat-container">
     <div class="card">
         <div class="card-header bg-primary text-white">Djanglang Chat</div>
-        <div class="card-body" id="chatBox">
-            <!-- Chat messages will be appended here -->
-        </div>
-        <div class="typing-indicator text-muted pl-2">Djanglang is typing...</div>
-        <div class="card-footer">
-            <div class="input-group">
-                <input type="text" id="query" class="form-control" placeholder="Ask a question related to Django...">
-                <div class="input-group-append">
-                    <button class="btn btn-primary" type="submit" id="sendBtn">Send</button>
+            <div class="card-body" id="chatBox">
+                <!-- Chat messages will be appended here -->
+            </div>
+            <div class="typing-indicator text-muted pl-2">Djanglang is typing...</div>
+            <div class="card-footer">
+                <div class="input-group">
+                    <input type="text" id="query" class="form-control" placeholder="Ask a question related to Django...">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit" id="sendBtn">Send</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <!-- Bootstrap JS and other scripts -->
+    <script>
+        function buildDatabase() {
+            fetch('/build_db/')
+            .then(() => {
+                // Start checking the database status every 2 seconds
+                const interval = setInterval(() => {
+                    fetch('/db_status/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            clearInterval(interval);
+                            document.getElementById('loadingScreen').style.display = 'none';
+                            document.getElementById('djanglang-chat-container').style.display = 'block';
+                        } else {
+                            // Update progress bar and message
+                            const progressBar = document.getElementById('loadingProgressBar');
+                            const progressMessages = [
+                                "building list of URLs to scrape",
+                                "fetching the source data",
+                                "building database"
+                            ];
+                            const progress = (progressMessages.indexOf(data.message) + 1) / progressMessages.length * 100;
+                            progressBar.style.width = progress + '%';
+                            document.getElementById('loadingMessage').innerText = data.message;
+                        }
+                    });
+                }, 2000);
+            });
+        }
 
-<script>
+        // Check if the database exists on page load
+        fetch('/db_status/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.exists) {
+                document.getElementById('djanglang-chat-container').style.display = 'block';
+            } else {
+                document.getElementById('loadingScreen').style.display = 'block';
+                buildDatabase();
+            }
+        });
+
+        
     document.getElementById('sendBtn').addEventListener('click', function() {
         const queryInput = document.getElementById('query');
         const query = queryInput.value;
@@ -56,7 +103,7 @@
         const chatBox = document.getElementById('chatBox');
         const userMessage = document.createElement('div');
         userMessage.className = 'message bg-light';
-        userMessage.innerHTML = `<strong>You:</strong> ${query} <span class="text-muted float-right">${new Date().toLocaleTimeString()}</span>`;
+        userMessage.innerHTML = `<strong>You:</strong> ${query} <span class="text-muted float-end">${new Date().toLocaleTimeString()}</span>`;
         chatBox.appendChild(userMessage);
 
         // Show typing indicator
@@ -75,7 +122,7 @@
         .then(data => {
             const botMessage = document.createElement('div');
             botMessage.className = 'message bg-secondary text-white';
-            botMessage.innerHTML = `<strong>Djanglang:</strong> ${data.answer}<br><small>${data.sources}</small> <span class="text-muted float-right">${new Date().toLocaleTimeString()}</span>`;
+            botMessage.innerHTML = `<strong>Djanglang:</strong> ${data.answer}<br><small>${data.sources}</small> <span class="text-muted float-end">${new Date().toLocaleTimeString()}</span>`;
             chatBox.appendChild(botMessage);
 
             // Scroll to the bottom of chatBox to show latest message
@@ -88,6 +135,6 @@
         // Clear the input field
         queryInput.value = '';
     });
-</script>
+    </script>
 </body>
 </html>
