@@ -4,6 +4,10 @@ from bs4 import BeautifulSoup
 import requests
 from langchain.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
+# from langchain.text_splitter import (
+#     RecursiveCharacterTextSplitter,
+#     Language,
+# )
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
@@ -13,24 +17,23 @@ import os
 
 load_dotenv()
 
-CHROMA_DB_DIRECTORY = "chroma_db/ask_django_docs"
+CHROMA_DB_DIRECTORY = "chroma_db/ask_bootstrap_docs"
 
 def database_exists():
     return os.path.exists(CHROMA_DB_DIRECTORY)
 
-def django_docs_build_urls():
-    root_url = "https://docs.djangoproject.com/en/4.2/contents/"
+def bootstrap_docs_build_urls():
+    root_url = "https://getbootstrap.com/docs/5.3/getting-started/contents/"
     root_response = requests.get(root_url)
     root_html = root_response.content.decode("utf-8")
     soup = BeautifulSoup(root_html, 'html.parser')
 
     root_url_parts = urlparse(root_url)
-    root_links = soup.find_all("a", attrs={"class": "reference internal"})
+    root_links = soup.find_all("a", attrs={"class": "bd-links-link d-inline-block rounded"})
 
     result = set()
-
     for root_link in root_links:
-        path = root_url_parts.path + root_link.get("href")
+        path = root_link.get("href")
         path = str(Path(path).resolve())
         path = urlparse(path).path  # remove the hashtag
 
@@ -40,15 +43,18 @@ def django_docs_build_urls():
             url = url + "/"
 
         result.add(url)
-    print(result)
     return list(result)
 
 def build_database():
-    urls = django_docs_build_urls()
+    urls = bootstrap_docs_build_urls()
     loader = WebBaseLoader(urls)
     documents = loader.load()
 
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+    # html_splitter = RecursiveCharacterTextSplitter.from_language(
+    #     language=Language.HTML, chunk_size=1000, chunk_overlap=0
+    # )
+    # html_docs = html_splitter.create_documents([html_text])
     splitted_documents = text_splitter.split_documents(documents)
 
     embeddings = OpenAIEmbeddings()
@@ -56,7 +62,7 @@ def build_database():
     db = Chroma.from_documents(
         splitted_documents,
         embeddings,
-        collection_name="ask_django_docs",
+        collection_name="ask_bootstrap_docs",
         persist_directory=CHROMA_DB_DIRECTORY,
     )
     db.persist()
@@ -64,7 +70,7 @@ def build_database():
 def answer_query(query):
     embeddings = OpenAIEmbeddings()
     db = Chroma(
-        collection_name="ask_django_docs",
+        collection_name="ask_bootstrap_docs",
         embedding_function=embeddings,
         persist_directory=CHROMA_DB_DIRECTORY
     )

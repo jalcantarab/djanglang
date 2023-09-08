@@ -25,16 +25,18 @@
     </style>
 </head>
 <body>
-    <div id="loadingScreen" style="display: none;" class="text-center">
-        <h4 id="loadingMessage">Initializing...</h4>
-        <!-- Bootstrap Progress Bar -->
-        <div class="progress mt-3" style="width: 60%; margin: auto;">
-            <div id="loadingProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+    <div id="loadingScreen" style="display: none;" class="d-flex justify-content-center align-items-center vh-100">
+        <div class="text-center w-75">
+            <h4 id="loadingMessage">Initializing...</h4>
+            <!-- Bootstrap Progress Bar -->
+            <div class="progress mt-3" role="progressbar" aria-label="Initializing..." aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                <div id="loadingProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
         </div>
     </div>
-    <div class="container mt-5" id="djanglang-chat-container">
-    <div class="card">
-        <div class="card-header bg-primary text-white">Djanglang Chat</div>
+    <div class="container mt-5" id="djanglang-chat-container" style="display: none;">
+        <div class="card">
+            <div class="card-header bg-primary text-white">Djanglang Chat</div>
             <div class="card-body" id="chatBox">
                 <!-- Chat messages will be appended here -->
             </div>
@@ -52,6 +54,7 @@
 
     <!-- Bootstrap JS and other scripts -->
     <script>
+        var progress_n = 0;
         function buildDatabase() {
             fetch('/build_db/')
             .then(() => {
@@ -62,22 +65,24 @@
                     .then(data => {
                         if (data.exists) {
                             clearInterval(interval);
-                            document.getElementById('loadingScreen').style.display = 'none';
-                            document.getElementById('djanglang-chat-container').style.display = 'block';
+                            document.getElementById('loadingScreen').style = 'display: none!important';
+                            document.getElementById('djanglang-chat-container').style = '';
                         } else {
                             // Update progress bar and message
                             const progressBar = document.getElementById('loadingProgressBar');
                             const progressMessages = [
-                                "building list of URLs to scrape",
-                                "fetching the source data",
-                                "building database"
+                                "Building list of URLs...",
+                                "Fetching the source data...",
+                                "Building database...",
+                                "Getting things ready..."
                             ];
-                            const progress = (progressMessages.indexOf(data.message) + 1) / progressMessages.length * 100;
+                            const progress = (progress_n+1) / progressMessages.length * 100;
                             progressBar.style.width = progress + '%';
-                            document.getElementById('loadingMessage').innerText = data.message;
+                            document.getElementById('loadingMessage').innerText = progressMessages[progress_n];
+                            if(progressMessages.length>progress_n+1)progress_n++;
                         }
                     });
-                }, 2000);
+                }, 4000);
             });
         }
 
@@ -85,10 +90,12 @@
         fetch('/db_status/')
         .then(response => response.json())
         .then(data => {
+            console.log(data)
             if (data.exists) {
-                document.getElementById('djanglang-chat-container').style.display = 'block';
+                document.getElementById('djanglang-chat-container').style = '';
+                document.getElementById('loadingScreen').style = 'display: none!important';
             } else {
-                document.getElementById('loadingScreen').style.display = 'block';
+                document.getElementById('loadingScreen').style.display = '';
                 buildDatabase();
             }
         });
