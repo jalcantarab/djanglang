@@ -12,12 +12,31 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.chat_models import ChatOpenAI
+from typing import Union, Any
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 CHROMA_DB_DIRECTORY = "chroma_db/ask_bootstrap_docs"
+
+from bs4 import BeautifulSoup
+
+class CustomWebBaseLoader(WebBaseLoader):
+    
+    def custom_bs4(self, soup):
+        print("====WE'RE PARSING==============")
+        """
+        Custom BeautifulSoup parser to extract content within the <main> tag.
+        """        
+        main_tag = soup.find('main') # Find the <main> tag
+        return BeautifulSoup(main_tag.text, 'html.parser') if main_tag else ""
+
+
+    def _scrape(self, url: str, parser: Union[str, None] = None) -> Any:
+        print("====WE'RE SCRAPING==============")
+        html_content = super()._scrape(url, parser)
+        return self.custom_bs4(html_content)
 
 def database_exists():
     return os.path.exists(CHROMA_DB_DIRECTORY)
@@ -32,7 +51,12 @@ def bootstrap_docs_build_urls():
     root_links = soup.find_all("a", attrs={"class": "bd-links-link d-inline-block rounded"})
 
     result = set()
+    # limit = 4
+    # counter = 0
     for root_link in root_links:
+        # if counter > limit: 
+        #     break
+        counter=counter+1
         path = root_link.get("href")
         path = str(Path(path).resolve())
         path = urlparse(path).path  # remove the hashtag
@@ -47,14 +71,16 @@ def bootstrap_docs_build_urls():
 
 def build_database():
     urls = bootstrap_docs_build_urls()
-    loader = WebBaseLoader(urls)
+    print(urls)
+    loader = CustomWebBaseLoader(urls)
     documents = loader.load()
-
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
-    # html_splitter = RecursiveCharacterTextSplitter.from_language(
-    #     language=Language.HTML, chunk_size=1000, chunk_overlap=0
-    # )
-    # html_docs = html_splitter.create_documents([html_text])
+    print("documents")
+    # print(documents)
+    text_splitter = CharacterTextSplitter(
+        separator = "\n\n",
+        chunk_size=750,
+        chunk_overlap=0
+    )
     splitted_documents = text_splitter.split_documents(documents)
 
     embeddings = OpenAIEmbeddings()
