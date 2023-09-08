@@ -4,10 +4,6 @@ from bs4 import BeautifulSoup
 import requests
 from langchain.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
-# from langchain.text_splitter import (
-#     RecursiveCharacterTextSplitter,
-#     Language,
-# )
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
