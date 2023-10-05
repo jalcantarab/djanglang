@@ -24,8 +24,8 @@ class CustomWebBaseLoader(WebBaseLoader):
         print("====WE'RE PARSING==============")
         """
         Custom BeautifulSoup parser to extract content within the <main> tag.
-        """        
-        main_tag = soup.find('main') # Find the <main> tag
+        """
+        soup.find("div", attrs={"class": "bd-content"})
         return BeautifulSoup(main_tag.text, 'html.parser') if main_tag else ""
 
 
@@ -47,11 +47,11 @@ def bootstrap_docs_build_urls():
     root_links = soup.find_all("a", attrs={"class": "bd-links-link d-inline-block rounded"})
 
     result = set()
-    # limit = 4
-    # counter = 0
+    limit = 4
+    counter = 0
     for root_link in root_links:
-        # if counter > limit: 
-        #     break
+        if counter > limit: 
+            break
         counter=counter+1
         path = root_link.get("href")
         path = str(Path(path).resolve())
@@ -71,7 +71,7 @@ def build_database():
     loader = CustomWebBaseLoader(urls)
     documents = loader.load()
     print("documents")
-    # print(documents)
+    print(documents)
     text_splitter = CharacterTextSplitter(
         separator = "\n\n",
         chunk_size=750,
@@ -109,6 +109,8 @@ def answer_query(query):
 
     return result
 
+
+# Addons
 def initiate_db_creation(db_name, source_url):
     """
     Initiate the database creation process.

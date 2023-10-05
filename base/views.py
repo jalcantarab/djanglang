@@ -20,15 +20,13 @@ def db_status(request):
     }
     return JsonResponse(status)
 
-
-
-# Addons
 def build_db(request):
     # Use threading to build the database asynchronously
     thread = threading.Thread(target=build_database)
     thread.start()
     return JsonResponse({'status': 'Building database...'})
 
+# Addons
 def create_db_form(request):
     return render(request, 'base/create_db_form.html')
 
