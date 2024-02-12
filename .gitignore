@@ -53,3 +53,4 @@ pyenv.cfg
 
 # Installer logs
 pip-log.txt
+initial_requirements.txt
