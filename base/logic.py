@@ -1,4 +1,4 @@
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from pathlib import Path
 from bs4 import BeautifulSoup
 import requests
@@ -25,7 +25,8 @@ class CustomWebBaseLoader(WebBaseLoader):
         """
         Custom BeautifulSoup parser to extract content within the <main> tag.
         """
-        soup.find("div", attrs={"class": "bd-content"})
+        # soup.find("div", attrs={"class": "bd-content"})
+        main_tag = soup.find('main')  # Find the <main> tag
         return BeautifulSoup(main_tag.text, 'html.parser') if main_tag else ""
 
 
