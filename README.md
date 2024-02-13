@@ -1,7 +1,3 @@
-Certainly! Below is a concise and precise README.md template for your project, Djanglang. It provides a brief overview of the app's functionality and directs readers to the Medium article for more detailed information.
-
----
-
 # Django: LangChained
 
 This is a sample Django application designed to demonstrate the integration of LangChain with Django for building a simple Retrieval-Augmented Generation (RAG) chatbot. This chatbot is capable of answering questions based on the content scraped from a website.
