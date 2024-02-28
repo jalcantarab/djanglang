@@ -3,7 +3,9 @@ Django==4.1.7
 djangorestframework==3.14.0
 environs==9.5.0
 openai==1.12.0
-tiktoken>=0.5.2,<=0.6.0
-langchain==0.1.4
-chromadb==0.4.22
-langchain-openai<0.1
+tiktoken>=0.5.2
+langchain-core
+langchain-community
+langchain-openai
+langchain
+pymongo>=3.6.0
